@@ -1,0 +1,65 @@
+name: Fabrication
+
+# Fabrique les deux composants Linux (x86_64) de Velka et les publie dans une Release datée :
+#   streamlink-<version>-linux-x86_64.zip     Streamlink (PyPI) dans le Python autonome de python-build-standalone
+#   libmpv-lgpl-<version>-linux-x86_64.zip    libmpv LGPL compilée depuis les sources (sources.txt)
+# avec un fichier .sha256 pour chacun. Lancement à la main (onglet Actions > Fabrication > Run workflow).
+# Ubuntu 22.04 : la glibc la plus ancienne des machines de GitHub, pour que les archives marchent sur le plus de
+# distributions possible. Pour une nouvelle version : changer les valeurs ci-dessous et sources.txt, puis relancer.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  SL_VERSION: "8.6.3"
+  PY_TAG: "20261124"
+  PY_FILE: "cpython-3.12.16+20261124-x86_64-unknown-linux-gnu-install_only.tar.gz"
+  PY_SHA256: "6774c7f49ee21c1723f7ac91961a5bf9f3ee3ae6e4d82ff58bd358958b546461"
+
+jobs:
+  linux:
+    runs-on: ubuntu-22.04
+    steps:
+      # Action épinglée par empreinte de commit.
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Outils de compilation
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq build-essential nasm pkg-config ninja-build \
+            libpulse-dev libasound2-dev zip git python3-pip
+          # meson 1.3 ou plus récent (celui d'Ubuntu 22.04 est trop ancien pour mpv).
+          python3 -m pip install --user "meson==1.6.1" "jinja2==3.1.6"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Sources de Python (empreinte vérifiée)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/src" "$RUNNER_TEMP/out"
+          gh release download "$PY_TAG" --repo astral-sh/python-build-standalone --pattern "$PY_FILE" --dir "$RUNNER_TEMP/src"
+          echo "$PY_SHA256  $RUNNER_TEMP/src/$PY_FILE" | sha256sum -c -
+
+      - name: Streamlink
+        run: bash streamlink.sh "$RUNNER_TEMP/src/$PY_FILE" "$SL_VERSION" "$RUNNER_TEMP/out/streamlink-$SL_VERSION-linux-x86_64.zip"
+
+      - name: libmpv (LGPL)
+        run: |
+          mpv="$(awk '$1 == "mpv" { print $3 }' sources.txt)"
+          bash libmpv.sh "$RUNNER_TEMP/out/libmpv-lgpl-$mpv-linux-x86_64.zip"
+
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd "$RUNNER_TEMP/out"
+          for f in *.zip; do sha256sum "$f" > "$f.sha256"; done
+          cat *.sha256
+          # Étiquette datée ; une seconde fabrication le même jour devient AAAA-MM-JJ-2, -3…
+          tag="$(date -u +%Y-%m-%d)"
+          n=1
+          while gh release view "$tag" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; do n=$((n + 1)); tag="$(date -u +%Y-%m-%d)-$n"; done
+          notes="Streamlink $SL_VERSION (Python $PY_FILE), libmpv LGPL compilée depuis les sources de sources.txt. Fabriqué par le run $GITHUB_RUN_ID sur Ubuntu 22.04."
+          gh release create "$tag" --repo "$GITHUB_REPOSITORY" --title "$tag" --notes "$notes" *.zip *.sha256

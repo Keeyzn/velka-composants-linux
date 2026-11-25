@@ -1,0 +1,9 @@
+# Sources de libmpv pour Linux : nom, dépôt Git, étiquette, commit exact (vérifié par Git à la récupération).
+zlib       https://github.com/madler/zlib.git          v1.4        99623ef7097352da7993ba614161fd6a311e046e
+freetype   https://github.com/freetype/freetype.git    VER-2-15-0  37515cf56ba3349656049edbed89ffc6f6466f2d
+fribidi    https://github.com/fribidi/fribidi.git      v1.0.18     15393e4937aa95bcf865d92143735746aeb654fa
+harfbuzz   https://github.com/harfbuzz/harfbuzz.git    15.2.0      ed51d202cfd0c29372d3ee056eb0dc715688a410
+libass     https://github.com/libass/libass.git        0.17.5      4a05d8127f525943ebf45fdc6497c9e665947f0d
+libplacebo https://github.com/haasn/libplacebo.git     v7.387.0    275f7dea27924cdd34ab2e6c20e448b6bc4fab65
+ffmpeg     https://github.com/FFmpeg/FFmpeg.git        n9.1        74e4393595cf2b5857f0da925c4e0dd74ea306e5
+mpv        https://github.com/mpv-player/mpv.git       v0.42.0     b0841e8c4d156b8403dc1876c4cbd9011eb583f3
