@@ -18,6 +18,9 @@ par l'éditeur.
   ALSA), sans décodage matériel ; sortie vidéo par l'API de rendu OpenGL de l'application.
 
 ## Sources
+- Chaque Release contient `sources-libmpv-lgpl-<version>-linux.tar.gz` : le code de chaque projet compilé, au commit
+  exact (sous-modules compris), et les scripts de fabrication. Il est produit par `sources.sh` (workflow « Sources »
+  pour une Release déjà publiée).
 - `sources.txt` : dépôt, étiquette et commit exact de chaque projet compilé (Git vérifie l'empreinte à la récupération).
 - Streamlink : https://github.com/streamlink/streamlink ; Python : https://github.com/astral-sh/python-build-standalone.
 
@@ -28,3 +31,7 @@ relancer. Sur une machine Ubuntu : `bash libmpv.sh libmpv.zip` et `bash streamli
 streamlink.zip` (outils demandés : voir l'en-tête de chaque script).
 Vous pouvez aussi remplacer `libmpv.so.2` par votre propre version de libmpv dans Velka (Réglages > Avancé et Système >
 Chemins personnalisés).
+
+## Licence
+Scripts de ce dépôt : [GNU GPL version 3 ou ultérieure](LICENSE), comme Velka. Les composants publiés gardent leur
+propre licence (tableau ci-dessus).

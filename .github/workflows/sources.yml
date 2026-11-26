@@ -1,0 +1,37 @@
+name: Sources
+
+# Joint l'archive des sources exactes de la libmpv LGPL (sources.sh) à une Release déjà publiée, sans refaire les
+# composants. Lancement à la main (onglet Actions > Sources > Run workflow) avec l'étiquette de la Release ; sources.txt
+# doit être celui qui a servi à la fabriquer.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Étiquette de la Release (ex. 2026-11-25)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  sources:
+    runs-on: ubuntu-22.04
+    steps:
+      # Action épinglée par empreinte de commit.
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Archive des sources
+        run: |
+          mkdir -p "$RUNNER_TEMP/out"
+          mpv="$(awk '$1 == "mpv" { print $3 }' sources.txt)"
+          bash sources.sh "$RUNNER_TEMP/out/sources-libmpv-lgpl-$mpv-linux.tar.gz"
+
+      - name: Envoi dans la Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          cd "$RUNNER_TEMP/out"
+          for f in *.tar.gz; do sha256sum "$f" > "$f.sha256"; done
+          cat *.sha256
+          gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber *.tar.gz *.sha256

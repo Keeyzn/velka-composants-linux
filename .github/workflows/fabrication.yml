@@ -50,16 +50,22 @@ jobs:
           mpv="$(awk '$1 == "mpv" { print $3 }' sources.txt)"
           bash libmpv.sh "$RUNNER_TEMP/out/libmpv-lgpl-$mpv-linux-x86_64.zip"
 
+      # Sources exactes de la libmpv LGPL, jointes à la Release (LGPL 2.1, section 6).
+      - name: Sources de libmpv
+        run: |
+          mpv="$(awk '$1 == "mpv" { print $3 }' sources.txt)"
+          bash sources.sh "$RUNNER_TEMP/out/sources-libmpv-lgpl-$mpv-linux.tar.gz"
+
       - name: Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           cd "$RUNNER_TEMP/out"
-          for f in *.zip; do sha256sum "$f" > "$f.sha256"; done
+          for f in *.zip *.tar.gz; do sha256sum "$f" > "$f.sha256"; done
           cat *.sha256
           # Étiquette datée ; une seconde fabrication le même jour devient AAAA-MM-JJ-2, -3…
           tag="$(date -u +%Y-%m-%d)"
           n=1
           while gh release view "$tag" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; do n=$((n + 1)); tag="$(date -u +%Y-%m-%d)-$n"; done
           notes="Streamlink $SL_VERSION (Python $PY_FILE), libmpv LGPL compilée depuis les sources de sources.txt. Fabriqué par le run $GITHUB_RUN_ID sur Ubuntu 22.04."
-          gh release create "$tag" --repo "$GITHUB_REPOSITORY" --title "$tag" --notes "$notes" *.zip *.sha256
+          gh release create "$tag" --repo "$GITHUB_REPOSITORY" --title "$tag" --notes "$notes" *.zip *.tar.gz *.sha256
